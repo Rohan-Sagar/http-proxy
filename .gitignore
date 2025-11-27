@@ -1,0 +1,18 @@
+# Binaries for the current project
+*.exe
+*.bin
+*.out
+*.test
+
+# Go build cache
+.cache/
+go.sum
+
+# Dependencies and vendor directory
+/vendor/
+
+# Operating system and editor specific files
+.DS_Store
+.vscode/
+.idea/
+Thumbs.db
