@@ -3,8 +3,10 @@ package main
 import (
 	"bufio"
 	"fmt"
+	"io"
 	"log"
 	"net"
+	"strconv"
 	"strings"
 )
 
@@ -27,6 +29,7 @@ type Request struct {
 	Path            string
 	ProtocolVersion string
 	Headers         map[string]string // using general map instead of Headers struct since we should be able to forward unknown headers
+	Body            []byte
 }
 
 func cleanString(s string) string {
@@ -45,10 +48,26 @@ func parseHeaders(lines []string) map[string]string {
 		}
 		key := strings.ToLower(strings.TrimSpace(parts[0])) // lower case for ease
 		val := strings.TrimSpace(parts[1])
-
 		headers[key] = val
 	}
 	return headers
+}
+
+func parseBody(reader *bufio.Reader, headers map[string]string) []byte {
+	bodySizeStr := headers["content-length"]
+	if bodySizeStr == "" {
+		return nil
+	}
+	bodySize, err := strconv.Atoi(bodySizeStr)
+	if err != nil {
+		return nil
+	}
+	body := make([]byte, bodySize)
+	_, err = io.ReadFull(reader, body)
+	if err != nil {
+		log.Printf("Error reading body: %v\n", err)
+	}
+	return body
 }
 
 func handleConn(conn net.Conn) {
@@ -72,21 +91,31 @@ func handleConn(conn net.Conn) {
 		fmt.Print(line)
 		lines = append(lines, line)
 	}
-
 	headers := parseHeaders(lines)
+	body := parseBody(reader, headers)
 	requestLine := strings.SplitN(lines[0], " ", 3)
+	if len(lines) < 3 {
+		log.Printf("Malformed request line: %s", lines[0])
+		return
+	}
 	request := Request{
 		Method:          RequestMethod(requestLine[0]),
 		Path:            requestLine[1],
 		ProtocolVersion: cleanString(requestLine[2]),
 		Headers:         headers,
+		Body:            body,
 	}
-
 	fmt.Println("\n")
 	fmt.Printf("%+v\n", request)
 	fmt.Println("\n")
 
-	fmt.Print(reader.)
+	response := "HTTP/1.1 200 OK\r\n" +
+		"Content-Type: text/plain\r\n" +
+		"Content-Length: 10\r\n" +
+		"\r\n" +
+		"Hallelujah"
+
+	conn.Write([]byte(response))
 }
 
 func main() {
@@ -96,7 +125,6 @@ func main() {
 	}
 	fmt.Println("Server started on port:", PORT)
 	defer listener.Close()
-
 	for {
 		conn, err := listener.Accept()
 		if err != nil {
@@ -106,5 +134,4 @@ func main() {
 		log.Printf("Accepted connection from: %s\n", conn.RemoteAddr())
 		go handleConn(conn)
 	}
-
 }
