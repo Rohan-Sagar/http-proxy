@@ -48,6 +48,7 @@ func ParseRequest(reader *bufio.Reader) (*Request, error) {
 	}, nil
 }
 
+// Read HTTP header lines from the connection until it encounters a blank line - which means reached end of headers according to HTTP/1.1
 func readHeaders(reader *bufio.Reader) ([]string, error) {
 	var lines []string
 	for {
@@ -65,6 +66,7 @@ func readHeaders(reader *bufio.Reader) ([]string, error) {
 	return lines, nil
 }
 
+// Convert raw header lines into a hashmap
 func parseHeaders(lines []string) map[string]string {
 	headers := make(map[string]string)
 	for _, line := range lines[1:] {
@@ -94,6 +96,7 @@ func parseBody(reader *bufio.Reader, headers map[string]string) []byte {
 	return body
 }
 
+// remove \r\n from strings
 func cleanString(s string) string {
 	return strings.ReplaceAll(s, "\r\n", "")
 }

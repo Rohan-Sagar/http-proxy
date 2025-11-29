@@ -19,6 +19,10 @@ func New(cfg *config.Config) *Proxy {
 	}
 }
 
+/*
+Begins listenting for incoming connections and spawns a goroutine for each connection
+Runs indefinitely until an error occurs
+*/
 func (p *Proxy) Start() error {
 	listener, err := net.Listen("tcp", ":"+p.config.Port)
 	if err != nil {

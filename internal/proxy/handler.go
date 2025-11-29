@@ -8,6 +8,11 @@ import (
 	httputil "github.com/rohan-sagar/http-proxy/internal/http"
 )
 
+/*
+Processes a single client connection:
+1) Parses incoming HTTP request
+2) Sends a response back to the client
+*/
 func (p *Proxy) handleConnection(conn net.Conn) {
 	defer func() {
 		log.Printf("Connection closed %s\n", conn.RemoteAddr())

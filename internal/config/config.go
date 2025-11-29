@@ -6,6 +6,7 @@ type Config struct {
 	Port string
 }
 
+// Load all env configs
 func Load() *Config {
 	port := os.Getenv("PORT")
 	if port == "" {
