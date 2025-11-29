@@ -22,26 +22,33 @@ const (
 	Options RequestMethod = "OPTIONS"
 )
 
-type Headers struct {
-	Host      string
-	UserAgent string
-	Accept    string
-}
-
 type Request struct {
 	Method          RequestMethod
 	Path            string
 	ProtocolVersion string
-	Headers         Headers
+	Headers         map[string]string // using general map instead of Headers struct since we should be able to forward unknown headers
 }
 
 func cleanString(s string) string {
 	substring := "\r\n"
 	// if the string contains the end of line delimiter - remove
 	s = strings.ReplaceAll(s, substring, "")
-	// if the string contains empty spaces - remove
-	s = strings.ReplaceAll(s, " ", "")
 	return s
+}
+
+func parseHeaders(lines []string) map[string]string {
+	headers := make(map[string]string)
+	for _, line := range lines[1:] {
+		parts := strings.SplitN(line, ":", 2)
+		if len(parts) != 2 {
+			continue
+		}
+		key := strings.ToLower(strings.TrimSpace(parts[0])) // lower case for ease
+		val := strings.TrimSpace(parts[1])
+
+		headers[key] = val
+	}
+	return headers
 }
 
 func handleConn(conn net.Conn) {
@@ -55,7 +62,7 @@ func handleConn(conn net.Conn) {
 	for {
 		line, err := reader.ReadString('\n')
 		if err != nil {
-			log.Fatal(err)
+			log.Printf("Error reading request string: %v\n", err)
 			break
 		}
 		// end of headers
@@ -65,11 +72,9 @@ func handleConn(conn net.Conn) {
 		fmt.Print(line)
 		lines = append(lines, line)
 	}
-	requestLine := strings.Split(lines[0], " ")
-	hostLine := strings.Split(lines[1], ":")
-	headers := Headers{
-		Host: cleanString(hostLine[1]),
-	}
+
+	headers := parseHeaders(lines)
+	requestLine := strings.SplitN(lines[0], " ", 3)
 	request := Request{
 		Method:          RequestMethod(requestLine[0]),
 		Path:            requestLine[1],
@@ -80,6 +85,8 @@ func handleConn(conn net.Conn) {
 	fmt.Println("\n")
 	fmt.Printf("%+v\n", request)
 	fmt.Println("\n")
+
+	fmt.Print(reader.)
 }
 
 func main() {
