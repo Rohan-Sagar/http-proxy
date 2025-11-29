@@ -11,7 +11,7 @@ import (
 
 // Forward client requests to backend server
 func (p *Proxy) handleRequestForwarding(port string, request *httputils.Request) error {
-	conn, err := net.Dial("tcp", port) // static port for now
+	conn, err := net.Dial("tcp", port)
 	if err != nil {
 		log.Printf("Error connecting to server: %v\n", err)
 		return err
@@ -51,7 +51,7 @@ func (p *Proxy) handleConnection(conn net.Conn) {
 	log.Printf("Request: %+v\n", request)
 
 	newRequest := httputils.NewRequest(request, incomingAddress)
-	error := p.handleRequestForwarding(":8081", newRequest)
+	error := p.handleRequestForwarding(":8081", newRequest) // static port for now
 	if error != nil {
 		log.Printf("Failed to forward request: %v\n", error)
 		return
