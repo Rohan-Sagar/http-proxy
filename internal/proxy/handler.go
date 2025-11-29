@@ -6,10 +6,11 @@ import (
 	"log"
 	"net"
 
-	httputil "github.com/rohan-sagar/http-proxy/internal/http"
+	httputils "github.com/rohan-sagar/http-proxy/internal/http"
 )
 
-func (p *Proxy) handleRequestForwarding(port string, request *httputil.Request) error {
+// Forward client requests to backend server
+func (p *Proxy) handleRequestForwarding(port string, request *httputils.Request) error {
 	conn, err := net.Dial("tcp", port) // static port for now
 	if err != nil {
 		log.Printf("Error connecting to server: %v\n", err)
@@ -41,7 +42,7 @@ func (p *Proxy) handleConnection(conn net.Conn) {
 
 	reader := bufio.NewReader(conn)
 
-	request, err := httputil.ParseRequest(reader)
+	request, err := httputils.ParseRequest(reader)
 	if err != nil {
 		log.Printf("Error parsing request: %v\n", err)
 		return
@@ -49,14 +50,14 @@ func (p *Proxy) handleConnection(conn net.Conn) {
 
 	log.Printf("Request: %+v\n", request)
 
-	newRequest := httputil.NewRequest(request, incomingAddress)
+	newRequest := httputils.NewRequest(request, incomingAddress)
 	error := p.handleRequestForwarding(":8081", newRequest)
 	if error != nil {
 		log.Printf("Failed to forward request: %v\n", error)
 		return
 	}
 
-	response := httputil.NewResponse(200, "Hallelujah")
+	response := httputils.NewResponse(200, "Hallelujah")
 
 	conn.Write([]byte(response.ToString()))
 
