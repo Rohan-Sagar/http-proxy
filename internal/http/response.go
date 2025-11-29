@@ -1,12 +1,22 @@
 package http
 
-import "fmt"
+import (
+	"bytes"
+	"fmt"
+)
 
 type Response struct {
 	StatusCode int
 	StatusText string
 	Headers    map[string]string
 	Body       []byte
+}
+
+func (r *Response) Byte() []byte {
+	var buf bytes.Buffer
+	buf.WriteString("\r\n")
+	buf.Write(r.Body)
+	return buf.Bytes()
 }
 
 /*
@@ -19,7 +29,7 @@ Example:
 	"\r\n" +
 	"Hallelujah"
 */
-func (r *Response) String() string {
+func (r *Response) ToString() string {
 	resp := fmt.Sprintf("HTTP/1.1 %d %s\r\n", r.StatusCode, r.StatusText)
 
 	for key, val := range r.Headers {
