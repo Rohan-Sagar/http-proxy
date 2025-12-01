@@ -1,0 +1,24 @@
+root = "."
+tmp_dir = "tmp"
+
+[build]
+  # Commands to run
+  cmd = "go build -o ./tmp/proxy ./cmd/proxy"
+  bin = "./tmp/proxy"
+
+  # Watch these directories
+  include_dir = ["cmd/proxy", "internal"]
+  include_ext = ["go"]
+  exclude_dir = ["tmp", "vendor"]
+
+  # Delay before rebuild (ms)
+  delay = 1000
+
+[log]
+  time = true
+
+[color]
+  main = "magenta"
+  watcher = "cyan"
+  build = "yellow"
+  runner = "green"
