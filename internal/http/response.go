@@ -1,8 +1,11 @@
 package http
 
 import (
-	"bytes"
+	"bufio"
 	"fmt"
+	"log"
+	"strconv"
+	"strings"
 )
 
 type Response struct {
@@ -10,13 +13,6 @@ type Response struct {
 	StatusText string
 	Headers    map[string]string
 	Body       []byte
-}
-
-func (r *Response) Byte() []byte {
-	var buf bytes.Buffer
-	buf.WriteString("\r\n")
-	buf.Write(r.Body)
-	return buf.Bytes()
 }
 
 /*
@@ -42,28 +38,39 @@ func (r *Response) ToString() string {
 	return resp
 }
 
-// creates an http response
-func NewResponse(statusCode int, body string) *Response {
+// Parse HTTP/1.1 response from raw TCP connection
+func ParseResponse(reader *bufio.Reader) (*Response, error) {
+	lines, err := readHeaders(reader)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(lines) < 1 {
+		return nil, ErrMalformedRequest
+	}
+
+	// ProtocolVersion StatusCode StatusText (HTTP/1.1 200 OK)
+	requestLine := strings.SplitN(lines[0], " ", 3)
+	if len(requestLine) < 3 {
+		return nil, ErrMalformedRequest
+	}
+
+	headers := parseHeaders(lines)
+	body := parseBody(reader, headers)
+
+	statusCode, err := strconv.Atoi(cleanString(requestLine[1]))
+	if err != nil {
+		log.Printf("Failed to convert statusCode string to int: %v\n", err)
+		return nil, err
+	}
+
 	return &Response{
 		StatusCode: statusCode,
-		StatusText: getStatusText(statusCode),
+		StatusText: cleanString(requestLine[2]),
 		Headers: map[string]string{
 			"Content-Type":   "text/plain",
 			"Content-Length": fmt.Sprintf("%d", len(body)),
 		},
 		Body: []byte(body),
-	}
-}
-
-func getStatusText(code int) string {
-	switch code {
-	case 200:
-		return "OK"
-	case 404:
-		return "Not Found"
-	case 500:
-		return "Internal Server Error"
-	default:
-		return "Unknown"
-	}
+	}, nil
 }
