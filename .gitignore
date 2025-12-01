@@ -16,3 +16,5 @@ go.sum
 .vscode/
 .idea/
 Thumbs.db
+
+tmp
