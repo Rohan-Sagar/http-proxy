@@ -2,8 +2,6 @@ package http
 
 import (
 	"bufio"
-	"io"
-	"strconv"
 	"strings"
 )
 
@@ -38,21 +36,6 @@ func parseHeaders(lines []string) map[string]string {
 		headers[key] = val
 	}
 	return headers
-}
-
-// Read the length of the Content-Length Header and read exactly those many bytes
-func parseBody(reader *bufio.Reader, headers map[string]string) []byte {
-	bodySizeStr := headers["content-length"]
-	if bodySizeStr == "" {
-		return nil
-	}
-	bodySize, err := strconv.Atoi(bodySizeStr)
-	if err != nil {
-		return nil
-	}
-	body := make([]byte, bodySize)
-	io.ReadFull(reader, body)
-	return body
 }
 
 // remove \r\n from strings

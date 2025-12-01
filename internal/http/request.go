@@ -5,7 +5,9 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"io"
 	"net"
+	"strconv"
 	"strings"
 )
 
@@ -103,13 +105,14 @@ func ParseRequest(reader *bufio.Reader) (*Request, error) {
 		return nil, ErrMalformedRequest
 	}
 
+	// POST /api/users HTTP/1.1
 	requestLine := strings.SplitN(lines[0], " ", 3)
 	if len(requestLine) < 3 {
 		return nil, ErrMalformedRequest
 	}
 
 	headers := parseHeaders(lines)
-	body := parseBody(reader, headers)
+	body := parseRequestBody(reader, headers)
 
 	return &Request{
 		Method:          RequestMethod(requestLine[0]),
@@ -118,4 +121,19 @@ func ParseRequest(reader *bufio.Reader) (*Request, error) {
 		Headers:         headers,
 		Body:            body,
 	}, nil
+}
+
+// Read the length of the Content-Length Header and read exactly those many bytes in the request body
+func parseRequestBody(reader *bufio.Reader, headers map[string]string) []byte {
+	bodySizeStr := headers["content-length"]
+	if bodySizeStr == "" {
+		return nil
+	}
+	bodySize, err := strconv.Atoi(bodySizeStr)
+	if err != nil {
+		return nil
+	}
+	body := make([]byte, bodySize)
+	io.ReadFull(reader, body) // since request bodies are small usually - buffering should be fine
+	return body
 }

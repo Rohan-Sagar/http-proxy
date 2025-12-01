@@ -11,7 +11,6 @@ import (
 
 // Handle response from backend server
 func (p *Proxy) handleServerResponse(conn net.Conn) {
-	fmt.Print("handleServerResponse\n")
 	reader := bufio.NewReader(conn)
 	response, err := httputils.ParseResponse(reader)
 	if err != nil {

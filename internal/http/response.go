@@ -56,7 +56,7 @@ func ParseResponse(reader *bufio.Reader) (*Response, error) {
 	}
 
 	headers := parseHeaders(lines)
-	body := parseBody(reader, headers)
+	body := parseResponseBody(reader, headers)
 
 	statusCode, err := strconv.Atoi(cleanString(requestLine[1]))
 	if err != nil {
@@ -73,4 +73,21 @@ func ParseResponse(reader *bufio.Reader) (*Response, error) {
 		},
 		Body: []byte(body),
 	}, nil
+}
+
+// Read the length of the Content-Length Header and read exactly those many bytes in the request body
+// Since response body can be huge - this will use streaming
+func parseResponseBody(reader *bufio.Reader, headers map[string]string) []byte {
+	bodySizeStr := headers["content-length"]
+	if bodySizeStr == "" {
+		return nil
+	}
+	bodySize, err := strconv.Atoi(bodySizeStr)
+	if err != nil {
+		return nil
+	}
+	body := make([]byte, bodySize)
+	// TODO: Stream the responses
+
+	return body
 }
