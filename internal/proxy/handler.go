@@ -87,7 +87,7 @@ func (p *Proxy) handleConnection(clientConn net.Conn) {
 	log.Printf("Request: %+v\n", request)
 
 	newRequest := httputils.NewRequest(request, incomingAddress)
-	serverConn, error := p.handleRequestForwarding(":8081", newRequest) // static port for now
+	serverConn, error := p.handleRequestForwarding(p.config.BackendURL, newRequest) // static port for now
 	if error != nil {
 		log.Printf("Failed to forward request: %v\n", error)
 		return
