@@ -3,7 +3,8 @@ package config
 import "os"
 
 type Config struct {
-	Port string
+	Port       string
+	BackendURL string
 }
 
 // Load all env configs
@@ -13,7 +14,13 @@ func Load() *Config {
 		port = "8080"
 	}
 
+	backendUrl := os.Getenv("BACKEND_URL")
+	if backendUrl == "" {
+		backendUrl = "localhost:8081"
+	}
+
 	return &Config{
-		Port: port,
+		Port:       port,
+		BackendURL: backendUrl,
 	}
 }

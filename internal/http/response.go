@@ -12,34 +12,27 @@ type Response struct {
 	StatusCode int
 	StatusText string
 	Headers    map[string]string
-	Body       []byte
+	RawHeader  string
 }
 
-/*
-Builds an http response string in the exact format required by the HTTP/1.1 protocol
-Example:
-
-	"HTTP/1.1 200 OK\r\n" +
-	"Content-Type: text/plain\r\n" +
-	"Content-Length: 10\r\n" +
-	"\r\n" +
-	"Hallelujah"
-*/
+// For debugging - read the response as a string
 func (r *Response) ToString() string {
-	resp := fmt.Sprintf("HTTP/1.1 %d %s\r\n", r.StatusCode, r.StatusText)
+	var sb strings.Builder
 
-	for key, val := range r.Headers {
-		resp += fmt.Sprintf("%s: %s\r\n", key, val)
+	sb.WriteString(fmt.Sprintf("HTTP/1.1 %d %s\r\n", r.StatusCode, r.StatusText))
+
+	for k, v := range r.Headers {
+		sb.WriteString(fmt.Sprintf("%s: %s\r\n", k, v))
 	}
 
-	resp += "\r\n"
-	resp += string(r.Body)
+	sb.WriteString("\r\n")
+	sb.WriteString("(body streamed, not buffered)\n")
 
-	return resp
+	return sb.String()
 }
 
 // Parse HTTP/1.1 response from raw TCP connection
-func ParseResponse(reader *bufio.Reader) (*Response, error) {
+func ParseResponseHeaders(reader *bufio.Reader) (*Response, error) {
 	lines, err := readHeaders(reader)
 	if err != nil {
 		return nil, err
@@ -55,39 +48,17 @@ func ParseResponse(reader *bufio.Reader) (*Response, error) {
 		return nil, ErrMalformedRequest
 	}
 
-	headers := parseHeaders(lines)
-	body := parseResponseBody(reader, headers)
-
 	statusCode, err := strconv.Atoi(cleanString(requestLine[1]))
 	if err != nil {
 		log.Printf("Failed to convert statusCode string to int: %v\n", err)
 		return nil, err
 	}
+	headers := parseHeaders(lines)
 
 	return &Response{
 		StatusCode: statusCode,
 		StatusText: cleanString(requestLine[2]),
-		Headers: map[string]string{
-			"Content-Type":   "text/plain",
-			"Content-Length": fmt.Sprintf("%d", len(body)),
-		},
-		Body: []byte(body),
+		Headers:    headers,
+		RawHeader:  buildRawHeaders(lines),
 	}, nil
-}
-
-// Read the length of the Content-Length Header and read exactly those many bytes in the request body
-// Since response body can be huge - this will use streaming
-func parseResponseBody(reader *bufio.Reader, headers map[string]string) []byte {
-	bodySizeStr := headers["content-length"]
-	if bodySizeStr == "" {
-		return nil
-	}
-	bodySize, err := strconv.Atoi(bodySizeStr)
-	if err != nil {
-		return nil
-	}
-	body := make([]byte, bodySize)
-	// TODO: Stream the responses
-
-	return body
 }

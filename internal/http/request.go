@@ -82,8 +82,8 @@ func NewRequest(r *Request, incomingAddress net.Addr) *Request {
 		headers[k] = v // this is fine because request headers are case insensitive
 	}
 
-	headers["x-forwarded-for"] = incomingAddress.String()
-	headers["x-forwarded-proto"] = "http" // static for now
+	headers["X-Forwarded-For"] = incomingAddress.String()
+	headers["X-Forwarded-Proto"] = "http" // static for now
 
 	return &Request{
 		Method:          r.Method,

@@ -42,3 +42,18 @@ func parseHeaders(lines []string) map[string]string {
 func cleanString(s string) string {
 	return strings.ReplaceAll(s, "\r\n", "")
 }
+
+// Reconstructs the exact raw header section from the lines
+// this is what gets sent to the client
+func buildRawHeaders(lines []string) string {
+	var sb strings.Builder
+
+	for _, line := range lines {
+		sb.WriteString(line) // line already includes trailing \r\n
+	}
+
+	// add blank separator line required between headers and body
+	sb.WriteString("\r\n")
+
+	return sb.String()
+}
